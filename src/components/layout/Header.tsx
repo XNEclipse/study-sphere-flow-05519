@@ -1,7 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, User } from "lucide-react";
+import { Moon, Sun, User, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface HeaderProps {
   children?: ReactNode;
@@ -9,6 +13,45 @@ interface HeaderProps {
 
 export const Header = ({ children }: HeaderProps) => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        if (!session && window.location.pathname !== '/auth') {
+          navigate('/auth');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: error.message,
+      });
+    } else {
+      toast({
+        title: "Signed out successfully",
+        description: "You've been logged out of StudySphere.",
+      });
+      navigate('/auth');
+    }
+  };
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card/50 backdrop-blur-sm px-4 lg:px-8">
@@ -30,10 +73,17 @@ export const Header = ({ children }: HeaderProps) => {
           <span className="sr-only">Toggle theme</span>
         </Button>
         
-        <Button variant="ghost" size="sm" className="h-9 w-9">
-          <User className="h-4 w-4" />
-          <span className="sr-only">User menu</span>
-        </Button>
+        {user ? (
+          <Button variant="ghost" size="sm" className="h-9 w-9" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+            <span className="sr-only">Sign out</span>
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" className="h-9 w-9" onClick={() => navigate('/auth')}>
+            <User className="h-4 w-4" />
+            <span className="sr-only">Sign in</span>
+          </Button>
+        )}
       </div>
     </header>
   );

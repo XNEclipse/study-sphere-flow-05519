@@ -12,6 +12,7 @@ import Tools from "./pages/Tools";
 import Scheduler from "./pages/Scheduler";
 import Progress from "./pages/Progress";
 import Settings from "./pages/Settings";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="library" element={<StudyLibrary />} />
