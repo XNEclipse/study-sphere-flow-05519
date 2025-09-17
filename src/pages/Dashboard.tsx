@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   PlayCircle, 
   Clock, 
@@ -16,6 +17,7 @@ import { useUserStats } from "@/hooks/useUserStats";
 
 export default function Dashboard() {
   const { stats, loading } = useUserStats();
+
   return (
     <div className="space-y-8">
       {/* Hero Section */}
@@ -57,19 +59,15 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-2xl font-bold text-muted-foreground">Loading...</div>
+              <Skeleton className="h-8 w-20 mb-2" />
             ) : (
-              <>
-                <div className="text-2xl font-bold text-success">
-                  {stats?.study_streak || 0} days
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.study_streak === 0 
-                    ? "Start your journey today!" 
-                    : "Keep it up! You're building momentum."}
-                </p>
-              </>
+              <div className="text-2xl font-bold text-success">
+                {stats?.study_streak || 0} days
+              </div>
             )}
+            <p className="text-xs text-muted-foreground">
+              Keep it up! You're building momentum.
+            </p>
           </CardContent>
         </Card>
 
@@ -80,19 +78,15 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-2xl font-bold text-muted-foreground">Loading...</div>
+              <Skeleton className="h-8 w-24 mb-2" />
             ) : (
-              <>
-                <div className="text-2xl font-bold text-primary">
-                  {stats?.total_study_time || 0} hrs
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.total_study_time === 0 
-                    ? "Complete your first session!" 
-                    : "Great progress on your learning journey"}
-                </p>
-              </>
+              <div className="text-2xl font-bold text-primary">
+                {stats?.total_study_time || 0} hrs
+              </div>
             )}
+            <p className="text-xs text-muted-foreground">
+              Track your learning progress
+            </p>
           </CardContent>
         </Card>
       </div>

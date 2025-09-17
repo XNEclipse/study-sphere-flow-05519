@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface UserStats {
+export interface UserStats {
   study_streak: number;
   total_study_time: number;
   last_login_date: string | null;
 }
 
-export const useUserStats = () => {
+export function useUserStats() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -20,24 +20,29 @@ export const useUserStats = () => {
 
       const { data, error } = await supabase
         .from('user_stats')
-        .select('study_streak, total_study_time, last_login_date')
+        .select('*')
         .eq('user_id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching stats:', error);
-        return;
+        throw error;
       }
 
-      setStats(data || { study_streak: 0, total_study_time: 0, last_login_date: null });
+      if (data) {
+        setStats({
+          study_streak: data.study_streak,
+          total_study_time: data.total_study_time,
+          last_login_date: data.last_login_date,
+        });
+      }
     } catch (error) {
-      console.error('Error in fetchStats:', error);
+      console.error('Error fetching user stats:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateStreakOnLogin = async () => {
+  const updateLoginStreak = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -46,13 +51,17 @@ export const useUserStats = () => {
         user_uuid: user.id
       });
 
-      if (error) {
-        console.error('Error updating streak:', error);
-      } else {
-        await fetchStats(); // Refresh stats after update
-      }
+      if (error) throw error;
+      
+      // Refetch stats after update
+      await fetchStats();
     } catch (error) {
-      console.error('Error in updateStreakOnLogin:', error);
+      console.error('Error updating login streak:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update login streak"
+      });
     }
   };
 
@@ -67,22 +76,22 @@ export const useUserStats = () => {
         duration_hours_param: durationHours
       });
 
-      if (error) {
-        console.error('Error completing session:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save study session",
-          variant: "destructive",
-        });
-      } else {
-        await fetchStats(); // Refresh stats after update
-        toast({
-          title: "Session Completed!",
-          description: `Added ${durationHours} hours to your study time`,
-        });
-      }
+      if (error) throw error;
+      
+      // Refetch stats after update
+      await fetchStats();
+      
+      toast({
+        title: "Session Complete!",
+        description: `Added ${durationHours} hours to your study time.`
+      });
     } catch (error) {
-      console.error('Error in completeSession:', error);
+      console.error('Error completing session:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to record session completion"
+      });
     }
   };
 
@@ -93,8 +102,8 @@ export const useUserStats = () => {
   return {
     stats,
     loading,
-    updateStreakOnLogin,
+    updateLoginStreak,
     completeSession,
-    refreshStats: fetchStats
+    refetch: fetchStats
   };
-};
+}
