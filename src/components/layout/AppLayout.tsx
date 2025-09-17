@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from '@supabase/supabase-js';
+import { useUserStats } from "@/hooks/useUserStats";
 
 export const AppLayout = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { updateStreakOnLogin } = useUserStats();
 
   useEffect(() => {
     // Check initial auth state
@@ -19,6 +21,9 @@ export const AppLayout = () => {
       setUser(session?.user ?? null);
       if (!session) {
         navigate('/auth');
+      } else {
+        // Update streak on app initialization if user is logged in
+        updateStreakOnLogin();
       }
       setLoading(false);
     });
@@ -29,12 +34,15 @@ export const AppLayout = () => {
         setUser(session?.user ?? null);
         if (!session) {
           navigate('/auth');
+        } else if (event === 'SIGNED_IN') {
+          // Update streak on successful login
+          updateStreakOnLogin();
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, updateStreakOnLogin]);
 
   if (loading) {
     return (

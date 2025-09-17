@@ -14,13 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      "Session Builder": {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      study_sessions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          duration_hours: number
+          id: string
+          session_name: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          duration_hours: number
+          id?: string
+          session_name?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          duration_hours?: number
+          id?: string
+          session_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          created_at: string
+          id: string
+          last_login_date: string | null
+          study_streak: number
+          total_study_time: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_login_date?: string | null
+          study_streak?: number
+          total_study_time?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_login_date?: string | null
+          study_streak?: number
+          total_study_time?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_study_session: {
+        Args: {
+          duration_hours_param: number
+          session_name_param: string
+          user_uuid: string
+        }
+        Returns: undefined
+      }
+      update_study_streak: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
