@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Brain, 
   Timer, 
@@ -89,6 +92,24 @@ const studyTechniques = [
 ];
 
 export default function StudyLibrary() {
+  const [selectedTechnique, setSelectedTechnique] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const openTechniqueDialog = (technique) => {
+    setSelectedTechnique(technique);
+    setIsDialogOpen(true);
+  };
+
+  const closeTechniqueDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedTechnique(null);
+  };
+
+  const openSessionBuilder = () => {
+    navigate('/builder');
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -120,7 +141,7 @@ export default function StudyLibrary() {
           <p className="text-secondary-foreground/90 mb-4">
             "If you can't explain it simply, you don't understand it well enough." - Richard Feynman
           </p>
-          <Button variant="energy" size="lg">
+          <Button variant="energy" size="lg" onClick={() => openTechniqueDialog(studyTechniques[0])}>
             <BookOpen className="mr-2" />
             Try Feynman Technique
           </Button>
@@ -166,12 +187,9 @@ export default function StudyLibrary() {
                 </div>
               </div>
 
-              <div className="space-y-3 pt-2">
-                <Button variant="default" className="w-full">
+              <div className="pt-2">
+                <Button variant="default" className="w-full" onClick={() => openTechniqueDialog(technique)}>
                   Learn Technique
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Use Template
                 </Button>
               </div>
             </CardContent>
@@ -185,11 +203,130 @@ export default function StudyLibrary() {
         <p className="text-muted-foreground mb-6">
           Combine these techniques using our Session Builder to create powerful learning experiences.
         </p>
-        <Button variant="hero" size="lg">
+        <Button variant="hero" size="lg" onClick={openSessionBuilder}>
           <Target className="mr-2" />
           Open Session Builder
         </Button>
       </Card>
+
+      {/* Technique Detail Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          {selectedTechnique && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-3 bg-gradient-primary rounded-lg">
+                    <selectedTechnique.icon className="h-8 w-8 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-2xl">{selectedTechnique.name}</DialogTitle>
+                    <DialogDescription className="text-lg">
+                      {selectedTechnique.description}
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              
+              <div className="space-y-6 mt-4">
+                <div className="flex items-center gap-6">
+                  <Badge variant="secondary" className="text-sm px-3 py-1">
+                    {selectedTechnique.difficulty}
+                  </Badge>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    {selectedTechnique.timeRequired}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Best for:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTechnique.bestFor.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Overview</h4>
+                  <p className="text-muted-foreground">{selectedTechnique.overview}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-semibold">When to Use</h4>
+                  <p className="text-muted-foreground">{selectedTechnique.whenToUse}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Who This Is For</h4>
+                  <p className="text-muted-foreground">{selectedTechnique.whoFor}</p>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="font-semibold">Implementation Steps</h4>
+                  {selectedTechnique.id === 'feynman' && (
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Choose a concept you want to understand</li>
+                      <li>Write it down and explain it in simple terms</li>
+                      <li>Identify gaps in your understanding</li>
+                      <li>Go back to your source material to fill gaps</li>
+                      <li>Repeat until you can explain it clearly</li>
+                    </ol>
+                  )}
+                  {selectedTechnique.id === 'pomodoro' && (
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Set a timer for 25 minutes</li>
+                      <li>Work on a single task with full focus</li>
+                      <li>Take a 5-minute break when timer goes off</li>
+                      <li>Repeat 3 more times</li>
+                      <li>Take a longer 15-30 minute break</li>
+                    </ol>
+                  )}
+                  {selectedTechnique.id === 'spaced-repetition' && (
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Learn new material</li>
+                      <li>Review after 1 day</li>
+                      <li>Review after 3 days</li>
+                      <li>Review after 1 week</li>
+                      <li>Continue increasing intervals</li>
+                    </ol>
+                  )}
+                  {selectedTechnique.id === 'active-recall' && (
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Close your notes and textbooks</li>
+                      <li>Write down everything you remember</li>
+                      <li>Check your notes for accuracy</li>
+                      <li>Focus on what you missed</li>
+                      <li>Repeat the process</li>
+                    </ol>
+                  )}
+                  {selectedTechnique.id === 'cornell-notes' && (
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Divide page: narrow left column, wide right, bottom section</li>
+                      <li>Take notes in the right column during lecture</li>
+                      <li>Write key points and questions in left column</li>
+                      <li>Summarize main ideas in bottom section</li>
+                      <li>Use for regular review sessions</li>
+                    </ol>
+                  )}
+                  {selectedTechnique.id === 'mind-mapping' && (
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Write main topic in center of page</li>
+                      <li>Draw branches for major subtopics</li>
+                      <li>Add smaller branches for details</li>
+                      <li>Use colors and symbols</li>
+                      <li>Review connections between concepts</li>
+                    </ol>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
