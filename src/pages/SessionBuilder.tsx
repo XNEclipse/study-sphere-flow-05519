@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,10 @@ import {
   Coffee,
   Trash2,
   GripVertical,
-  Save
+  Save,
+  Pause,
+  Play,
+  RotateCw
 } from "lucide-react";
 
 const availableSteps = [
@@ -28,6 +31,11 @@ export default function SessionBuilder() {
     { id: "1", type: "pomodoro", name: "Pomodoro Block", duration: "25 min", customDuration: 25 },
     { id: "2", type: "break", name: "Short Break", duration: "5 min", customDuration: 5 }
   ]);
+  
+  const [isTimerVisible, setIsTimerVisible] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const addStep = (stepType: any) => {
     const step = availableSteps.find(s => s.id === stepType);
@@ -49,6 +57,80 @@ export default function SessionBuilder() {
 
   const getTotalDuration = () => {
     return sessionSteps.reduce((total, step) => total + step.customDuration, 0);
+  };
+
+  const loadTemplate = (templateType: string) => {
+    let steps: any[] = [];
+    
+    switch (templateType) {
+      case "focus-flow":
+        steps = [
+          { id: Date.now().toString(), type: "pomodoro", name: "Pomodoro Block", duration: "25 min", customDuration: 25 },
+          { id: (Date.now() + 1).toString(), type: "break", name: "Break", duration: "5 min", customDuration: 5 },
+          { id: (Date.now() + 2).toString(), type: "active-recall", name: "Active Recall", duration: "15 min", customDuration: 15 }
+        ];
+        break;
+      case "deep-dive":
+        steps = [
+          { id: Date.now().toString(), type: "pomodoro", name: "Pomodoro Block", duration: "45 min", customDuration: 45 },
+          { id: (Date.now() + 1).toString(), type: "break", name: "Break", duration: "15 min", customDuration: 15 },
+          { id: (Date.now() + 2).toString(), type: "review", name: "Spaced Review", duration: "30 min", customDuration: 30 }
+        ];
+        break;
+      case "quick-review":
+        steps = [
+          { id: Date.now().toString(), type: "review", name: "Spaced Review", duration: "10 min", customDuration: 10 },
+          { id: (Date.now() + 1).toString(), type: "break", name: "Break", duration: "5 min", customDuration: 5 },
+          { id: (Date.now() + 2).toString(), type: "active-recall", name: "Active Recall", duration: "10 min", customDuration: 10 }
+        ];
+        break;
+    }
+    
+    setSessionSteps(steps);
+  };
+
+  const startSession = () => {
+    const totalMinutes = getTotalDuration();
+    setTimeRemaining(totalMinutes * 60); // Convert to seconds
+    setIsTimerVisible(true);
+    setIsTimerRunning(true);
+    setIsPaused(false);
+  };
+
+  const toggleTimer = () => {
+    setIsTimerRunning(!isTimerRunning);
+    setIsPaused(!isPaused);
+  };
+
+  const resetTimer = () => {
+    const totalMinutes = getTotalDuration();
+    setTimeRemaining(totalMinutes * 60);
+    setIsTimerRunning(false);
+    setIsPaused(false);
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isTimerRunning && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setIsTimerRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timeRemaining]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -115,7 +197,12 @@ export default function SessionBuilder() {
                   <Save className="h-4 w-4 mr-2" />
                   Save Template
                 </Button>
-                <Button variant="hero" size="sm" disabled={sessionSteps.length === 0}>
+                <Button 
+                  variant="hero" 
+                  size="sm" 
+                  disabled={sessionSteps.length === 0}
+                  onClick={startSession}
+                >
                   <PlayCircle className="h-4 w-4 mr-2" />
                   Start Session
                 </Button>
@@ -175,6 +262,51 @@ export default function SessionBuilder() {
         </Card>
       </div>
 
+      {/* Timer Section */}
+      {isTimerVisible && (
+        <Card className="shadow-soft border-2 border-primary">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-6">
+              <div className="text-6xl font-bold text-primary tabular-nums">
+                {formatTime(timeRemaining)}
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <Button
+                  variant={isTimerRunning ? "secondary" : "hero"}
+                  size="lg"
+                  onClick={toggleTimer}
+                >
+                  {isTimerRunning ? (
+                    <>
+                      <Pause className="h-5 w-5 mr-2" />
+                      Pause
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-5 w-5 mr-2" />
+                      {isPaused ? "Resume" : "Start"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={resetTimer}
+                >
+                  <RotateCw className="h-5 w-5 mr-2" />
+                  Reset
+                </Button>
+              </div>
+              {timeRemaining === 0 && (
+                <p className="text-lg text-success font-medium">
+                  Session Complete! 🎉
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Templates */}
       <Card className="shadow-soft">
         <CardHeader>
@@ -185,7 +317,10 @@ export default function SessionBuilder() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+            <div 
+              className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => loadTemplate("focus-flow")}
+            >
               <h4 className="font-medium mb-2">Focus Flow</h4>
               <p className="text-sm text-muted-foreground mb-3">Pomodoro + Active Recall</p>
               <div className="flex gap-1">
@@ -195,7 +330,10 @@ export default function SessionBuilder() {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+            <div 
+              className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => loadTemplate("deep-dive")}
+            >
               <h4 className="font-medium mb-2">Deep Dive</h4>
               <p className="text-sm text-muted-foreground mb-3">Extended study with breaks</p>
               <div className="flex gap-1">
@@ -205,7 +343,10 @@ export default function SessionBuilder() {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+            <div 
+              className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => loadTemplate("quick-review")}
+            >
               <h4 className="font-medium mb-2">Quick Review</h4>
               <p className="text-sm text-muted-foreground mb-3">Spaced repetition focused</p>
               <div className="flex gap-1">
