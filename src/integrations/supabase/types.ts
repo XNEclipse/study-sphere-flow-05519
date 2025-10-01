@@ -14,6 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
+      flashcard_cards: {
+        Row: {
+          created_at: string
+          definition: string
+          definition_image_url: string | null
+          id: string
+          position: number
+          set_id: string
+          term: string
+          term_image_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          definition: string
+          definition_image_url?: string | null
+          id?: string
+          position?: number
+          set_id: string
+          term: string
+          term_image_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          definition?: string
+          definition_image_url?: string | null
+          id?: string
+          position?: number
+          set_id?: string
+          term?: string
+          term_image_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_cards_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcard_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcard_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          folder_id: string | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          folder_id?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          folder_id?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_sets_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       "Session Builder": {
         Row: {
           created_at: string
@@ -28,6 +134,50 @@ export type Database = {
           id?: number
         }
         Relationships: []
+      }
+      study_progress: {
+        Row: {
+          card_id: string
+          created_at: string
+          ease_factor: number
+          id: string
+          interval: number
+          next_review: string
+          repetition: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval?: number
+          next_review?: string
+          repetition?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval?: number
+          next_review?: string
+          repetition?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_progress_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_cards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       study_sessions: {
         Row: {

@@ -14,6 +14,9 @@ import Progress from "./pages/Progress";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Flashcards from "./pages/Flashcards";
+import FlashcardEditor from "./pages/FlashcardEditor";
+import FlashcardStudy from "./pages/FlashcardStudy";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +37,10 @@ const App = () => (
               <Route path="scheduler" element={<Scheduler />} />
               <Route path="progress" element={<Progress />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="flashcards" element={<Flashcards />} />
+              <Route path="flashcards/new" element={<FlashcardEditor />} />
+              <Route path="flashcards/:setId/edit" element={<FlashcardEditor />} />
+              <Route path="flashcards/:setId/study" element={<FlashcardStudy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Route>

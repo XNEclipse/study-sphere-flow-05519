@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 
 export default function Tools() {
+  const navigate = useNavigate();
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [isBreak, setIsBreak] = useState(false);
@@ -205,7 +207,7 @@ export default function Tools() {
             <p className="text-sm text-muted-foreground mb-4">
               Create and study with spaced repetition
             </p>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => navigate("/flashcards")}>
               Open Flashcards
             </Button>
           </CardContent>
