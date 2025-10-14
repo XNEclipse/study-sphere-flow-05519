@@ -368,6 +368,46 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Continue Where You Left Off */}
+      {JSON.parse(localStorage.getItem("tomorrowGoals") || "[]").length > 0 && (
+        <Card className="shadow-soft border-2 border-accent/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowRight className="h-5 w-5 text-accent" />
+              Continue Where You Left Off!
+            </CardTitle>
+            <CardDescription>
+              Tasks saved for tomorrow - bring them back to today's focus
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {JSON.parse(localStorage.getItem("tomorrowGoals") || "[]").map((goal: Goal) => (
+              <div 
+                key={goal.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-accent/10 border border-accent/20"
+              >
+                <span className="text-sm flex-1">
+                  {goal.text}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const tomorrowGoals = JSON.parse(localStorage.getItem("tomorrowGoals") || "[]");
+                    const updatedTomorrowGoals = tomorrowGoals.filter((g: Goal) => g.id !== goal.id);
+                    localStorage.setItem("tomorrowGoals", JSON.stringify(updatedTomorrowGoals));
+                    setGoals(prev => [...prev, { ...goal, completed: false }]);
+                  }}
+                  className="text-xs"
+                >
+                  Return to Today's Focus
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

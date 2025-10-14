@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import CornellNotes from "@/components/CornellNotes";
 import { 
   Timer, 
   Play, 
@@ -12,7 +13,6 @@ import {
   Volume2, 
   VolumeX,
   Brain,
-  FileText,
   Lightbulb,
   Layers,
   Mic,
@@ -230,20 +230,7 @@ export default function Tools() {
         </Card>
 
         {/* Cornell Notes */}
-        <Card className="shadow-soft hover:shadow-focus transition-all cursor-pointer group">
-          <CardContent className="p-6 text-center">
-            <div className="p-4 bg-gradient-success rounded-xl w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <FileText className="h-8 w-8 text-success-foreground" />
-            </div>
-            <h3 className="font-semibold mb-2">Cornell Notes</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Structured note-taking template
-            </p>
-            <Button variant="outline" className="w-full">
-              Start Taking Notes
-            </Button>
-          </CardContent>
-        </Card>
+        <CornellNotes />
 
         {/* Digital Whiteboard */}
         <Card className="shadow-soft hover:shadow-focus transition-all cursor-pointer group">
