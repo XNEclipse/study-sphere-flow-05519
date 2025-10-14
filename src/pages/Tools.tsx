@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import CornellNotes from "@/components/CornellNotes";
+import MindMapWorkspace from "@/components/MindMap/MindMapWorkspace";
 import { 
   Timer, 
   Play, 
@@ -26,6 +27,7 @@ export default function Tools() {
   const [isBreak, setIsBreak] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [showMindMap, setShowMindMap] = useState(false);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -59,6 +61,10 @@ export default function Tools() {
     setIsRecording(!isRecording);
     // Voice recording logic would go here
   };
+
+  if (showMindMap) {
+    return <MindMapWorkspace onClose={() => setShowMindMap(false)} />;
+  }
 
   return (
     <div className="space-y-8">
@@ -223,7 +229,7 @@ export default function Tools() {
             <p className="text-sm text-muted-foreground mb-4">
               Visualize connections between concepts
             </p>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => setShowMindMap(true)}>
               Create Mind Map
             </Button>
           </CardContent>
