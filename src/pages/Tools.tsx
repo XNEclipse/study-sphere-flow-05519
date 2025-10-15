@@ -6,7 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import CornellNotes from "@/components/CornellNotes";
 import MindMapWorkspace from "@/components/MindMap/MindMapWorkspace";
-import { 
+import WhiteboardCanvas from "@/components/Whiteboard/WhiteboardCanvas";
+import {
   Timer, 
   Play, 
   Pause, 
@@ -28,6 +29,7 @@ export default function Tools() {
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showMindMap, setShowMindMap] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -64,6 +66,10 @@ export default function Tools() {
 
   if (showMindMap) {
     return <MindMapWorkspace onClose={() => setShowMindMap(false)} />;
+  }
+
+  if (showWhiteboard) {
+    return <WhiteboardCanvas onClose={() => setShowWhiteboard(false)} />;
   }
 
   return (
@@ -248,7 +254,7 @@ export default function Tools() {
             <p className="text-sm text-muted-foreground mb-4">
               Draw and explain concepts visually
             </p>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => setShowWhiteboard(true)}>
               Open Whiteboard
             </Button>
           </CardContent>

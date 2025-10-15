@@ -44,7 +44,7 @@ import jsPDF from 'jspdf';
 import CustomNode from './CustomNode';
 import StylePanel from './StylePanel';
 import TemplateLibrary from './TemplateLibrary';
-import PresentationMode from './PresentationMode';
+
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -68,7 +68,6 @@ export default function MindMapWorkspace({ onClose }: MindMapWorkspaceProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [mapName, setMapName] = useState('Untitled Mind Map');
-  const [isPresentationMode, setIsPresentationMode] = useState(false);
   const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -195,9 +194,10 @@ export default function MindMapWorkspace({ onClose }: MindMapWorkspaceProps) {
     (params: Connection) => {
       const newEdge = {
         ...params,
-        type: 'smoothstep',
-        animated: true,
-        markerEnd: { type: MarkerType.ArrowClosed },
+        type: 'default',
+        animated: false,
+        style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: 'hsl(var(--primary))' },
       };
       setEdges((eds) => addEdge(newEdge, eds));
     },
@@ -230,9 +230,10 @@ export default function MindMapWorkspace({ onClose }: MindMapWorkspaceProps) {
           id: `e${selectedNode.id}-${newNode.id}`,
           source: selectedNode.id,
           target: newNode.id,
-          type: 'smoothstep',
-          animated: true,
-          markerEnd: { type: MarkerType.ArrowClosed },
+          type: 'default',
+          animated: false,
+          style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: 'hsl(var(--primary))' },
         };
         setEdges((eds) => [...eds, newEdge]);
       }
@@ -388,15 +389,6 @@ export default function MindMapWorkspace({ onClose }: MindMapWorkspaceProps) {
     toast.success('Template applied!');
   }, [setNodes, setEdges]);
 
-  if (isPresentationMode) {
-    return (
-      <PresentationMode
-        nodes={nodes}
-        edges={edges}
-        onExit={() => setIsPresentationMode(false)}
-      />
-    );
-  }
 
   return (
     <div className="fixed inset-0 z-50 bg-background">
@@ -436,10 +428,6 @@ export default function MindMapWorkspace({ onClose }: MindMapWorkspaceProps) {
             <Grid className="h-4 w-4 mr-2" />
             Templates
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setIsPresentationMode(true)}>
-            <Play className="h-4 w-4 mr-2" />
-            Present
-          </Button>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
@@ -463,14 +451,6 @@ export default function MindMapWorkspace({ onClose }: MindMapWorkspaceProps) {
             <Background color="#e5e7eb" gap={16} />
             <Controls />
             <MiniMap zoomable pannable />
-            
-            <Panel position="top-left" className="bg-card border border-border rounded-lg p-2 shadow-soft">
-              <div className="text-xs text-muted-foreground space-y-1">
-                <div>💡 Tip: Double-click node to edit</div>
-                <div>⌨️ Press N to add node</div>
-                <div>⌨️ Press Delete to remove</div>
-              </div>
-            </Panel>
           </ReactFlow>
         </div>
 
