@@ -11,7 +11,19 @@ import {
   Lightbulb,
   Target,
   Paperclip,
+  ExternalLink,
 } from 'lucide-react';
+
+// Utility to calculate brightness and return contrasting text color
+const getContrastColor = (hslColor: string): string => {
+  if (!hslColor || !hslColor.includes('hsl')) return '#000000';
+  
+  const match = hslColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if (!match) return '#000000';
+  
+  const lightness = parseInt(match[3]);
+  return lightness > 60 ? '#000000' : '#ffffff';
+};
 
 const iconMap: Record<string, any> = {
   book: BookOpen,
@@ -35,10 +47,11 @@ function CustomNode({ data, isConnectable }: NodeProps) {
   };
 
   const IconComponent = data.icon ? iconMap[data.icon] : null;
+  const contrastColor = getContrastColor(data.color || 'hsl(var(--card))');
 
   const shapeStyles = {
     rounded: 'rounded-lg',
-    circle: 'rounded-full aspect-square',
+    circle: 'rounded-full aspect-square flex items-center justify-center min-w-[120px] min-h-[120px]',
     pill: 'rounded-full',
   };
 
@@ -52,22 +65,24 @@ function CustomNode({ data, isConnectable }: NodeProps) {
       />
       
       <Card
-        className={`min-w-[150px] max-w-[250px] p-3 shadow-focus border-2 cursor-pointer transition-all hover:shadow-glow ${
+        className={`min-w-[150px] max-w-[250px] p-3 shadow-soft border-2 cursor-pointer transition-all hover:shadow-focus ${
           shapeStyles[data.shape || 'rounded']
         }`}
         style={{
           backgroundColor: data.color || 'hsl(var(--card))',
           borderColor: data.color || 'hsl(var(--border))',
+          color: contrastColor,
         }}
         onDoubleClick={handleDoubleClick}
       >
-        <div className="flex items-start gap-2">
+        <div className="flex items-center gap-2">
           {data.collapsed !== undefined && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 p-0"
+              className="h-5 w-5 p-0 flex-shrink-0"
               onClick={() => data.onToggleCollapse?.()}
+              style={{ color: contrastColor }}
             >
               {data.collapsed ? (
                 <ChevronRight className="h-4 w-4" />
@@ -78,7 +93,7 @@ function CustomNode({ data, isConnectable }: NodeProps) {
           )}
 
           {IconComponent && (
-            <IconComponent className="h-5 w-5 flex-shrink-0" style={{ color: data.color }} />
+            <IconComponent className="h-5 w-5 flex-shrink-0" style={{ color: contrastColor }} />
           )}
 
           <div className="flex-1 min-w-0">
@@ -94,14 +109,45 @@ function CustomNode({ data, isConnectable }: NodeProps) {
                 className="h-7 text-sm"
               />
             ) : (
-              <div className="font-medium text-sm break-words">{label}</div>
+              <div className="font-medium text-sm break-words text-center">{label}</div>
             )}
 
             {data.attachments && data.attachments.length > 0 && (
-              <Badge variant="secondary" className="mt-2 text-xs">
-                <Paperclip className="h-3 w-3 mr-1" />
-                {data.attachments.length}
-              </Badge>
+              <div className="mt-2 space-y-2">
+                {data.attachments.slice(0, 2).map((attachment: any) => (
+                  <div key={attachment.id} className="space-y-1">
+                    {attachment.type === 'image' ? (
+                      <div className="relative group">
+                        <img
+                          src={attachment.url}
+                          alt="Attachment"
+                          className="w-full h-20 object-cover rounded border"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs hover:underline"
+                        style={{ color: contrastColor }}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span className="truncate">Link</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
+                {data.attachments.length > 2 && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Paperclip className="h-3 w-3 mr-1" />
+                    +{data.attachments.length - 2} more
+                  </Badge>
+                )}
+              </div>
             )}
 
             {data.collapsed && data.childCount && (

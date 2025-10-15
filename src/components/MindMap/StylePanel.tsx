@@ -15,11 +15,12 @@ interface StylePanelProps {
 }
 
 const colorPresets = [
-  { name: 'Primary', value: 'hsl(224, 100%, 45%)' },
-  { name: 'Secondary', value: 'hsl(260, 90%, 45%)' },
-  { name: 'Success', value: 'hsl(142, 76%, 36%)' },
-  { name: 'Accent', value: 'hsl(30, 95%, 55%)' },
-  { name: 'Muted', value: 'hsl(220, 15%, 70%)' },
+  { name: 'Lavender', value: 'hsl(270, 60%, 85%)' },
+  { name: 'Mint', value: 'hsl(160, 50%, 80%)' },
+  { name: 'Peach', value: 'hsl(20, 80%, 85%)' },
+  { name: 'Sky', value: 'hsl(200, 60%, 85%)' },
+  { name: 'Rose', value: 'hsl(340, 60%, 85%)' },
+  { name: 'Lemon', value: 'hsl(55, 70%, 85%)' },
 ];
 
 const shapeOptions = [
@@ -54,6 +55,42 @@ export default function StylePanel({ node, onUpdateNode, onDeleteNode }: StylePa
 
     setAttachmentUrl('');
     toast.success('Attachment added!');
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (jpg, png, gif, webp)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      const newAttachment = {
+        id: Date.now().toString(),
+        type: 'image',
+        url: dataUrl,
+      };
+
+      const currentAttachments = node.data.attachments || [];
+      onUpdateNode(node.id, {
+        attachments: [...currentAttachments, newAttachment],
+      });
+
+      toast.success('Image uploaded!');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveAttachment = (attachmentId: string) => {
@@ -165,7 +202,7 @@ export default function StylePanel({ node, onUpdateNode, onDeleteNode }: StylePa
               onClick={() => setAttachmentType('image')}
             >
               <ImageIcon className="h-4 w-4 mr-1" />
-              Image
+              Image URL
             </Button>
           </div>
           
@@ -180,29 +217,54 @@ export default function StylePanel({ node, onUpdateNode, onDeleteNode }: StylePa
             </Button>
           </div>
 
+          <div className="text-center text-sm text-muted-foreground">or</div>
+
+          <div>
+            <Input
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              onChange={handleFileUpload}
+              className="cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Upload image file (max 5MB)
+            </p>
+          </div>
+
           {node.data.attachments && node.data.attachments.length > 0 && (
             <Card className="p-3 space-y-2">
               {node.data.attachments.map((attachment: any) => (
-                <div
-                  key={attachment.id}
-                  className="flex items-center justify-between text-xs"
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {attachment.type === 'link' ? (
-                      <LinkIcon className="h-3 w-3 flex-shrink-0" />
-                    ) : (
-                      <ImageIcon className="h-3 w-3 flex-shrink-0" />
-                    )}
-                    <span className="truncate">{attachment.url}</span>
+                <div key={attachment.id} className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {attachment.type === 'link' ? (
+                        <LinkIcon className="h-3 w-3 flex-shrink-0" />
+                      ) : (
+                        <ImageIcon className="h-3 w-3 flex-shrink-0" />
+                      )}
+                      <span className="truncate">
+                        {attachment.url.startsWith('data:') ? 'Uploaded image' : attachment.url}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleRemoveAttachment(attachment.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => handleRemoveAttachment(attachment.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {attachment.type === 'image' && (
+                    <img
+                      src={attachment.url}
+                      alt="Preview"
+                      className="w-full h-24 object-cover rounded border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </Card>
