@@ -3,10 +3,6 @@ import { cn } from "@/lib/utils";
 import { 
   Home, 
   BookOpen, 
-  Settings, 
-  Timer, 
-  Calendar,
-  BarChart3,
   Layers3,
   Wrench,
   GraduationCap
@@ -17,9 +13,6 @@ const navigation = [
   { name: "Study Library", to: "/library", icon: BookOpen },
   { name: "Session Builder", to: "/builder", icon: Layers3 },
   { name: "Tools", to: "/tools", icon: Wrench },
-  { name: "Scheduler", to: "/scheduler", icon: Calendar },
-  { name: "Progress", to: "/progress", icon: BarChart3 },
-  { name: "Settings", to: "/settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -64,21 +57,6 @@ export const Sidebar = ({ onItemClick }: SidebarProps) => {
           </NavLink>
         ))}
       </nav>
-
-      {/* Bottom section */}
-      <div className="p-4 border-t border-border">
-        <div className="rounded-lg bg-gradient-focus p-4 text-center">
-          <p className="text-sm font-medium text-white mb-2">
-            Ready to unlock advanced features?
-          </p>
-          <p className="text-xs text-white/80 mb-3">
-            Connect to Supabase for session tracking, progress analytics, and more!
-          </p>
-          <button className="text-xs text-white/90 hover:text-white underline">
-            Connect Backend →
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

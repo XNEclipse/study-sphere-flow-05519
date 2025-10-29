@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import CornellNotes from "@/components/CornellNotes";
 import MindMapWorkspace from "@/components/MindMap/MindMapWorkspace";
 import WhiteboardCanvas from "@/components/Whiteboard/WhiteboardCanvas";
@@ -21,15 +23,26 @@ import {
   MicOff
 } from "lucide-react";
 
+// Extend Window interface for SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 export default function Tools() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [isBreak, setIsBreak] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState("");
   const [showMindMap, setShowMindMap] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -59,9 +72,103 @@ export default function Tools() {
     setTimeLeft(25 * 60);
   };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    // Voice recording logic would go here
+  const toggleRecording = async () => {
+    if (!isRecording) {
+      // Check if speech recognition is supported
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        toast({
+          title: "Not Supported",
+          description: "Speech recognition is not supported in your browser. Please use Chrome or Safari.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // Initialize speech recognition
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          console.log('Speech recognition started');
+          setIsRecording(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcriptPiece = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcriptPiece + ' ';
+            } else {
+              interimTranscript += transcriptPiece;
+            }
+          }
+
+          setTranscript(prev => {
+            const newText = prev + finalTranscript;
+            return newText;
+          });
+
+          // Show interim results in real-time
+          if (interimTranscript) {
+            console.log('Interim:', interimTranscript);
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          
+          let errorMessage = "An error occurred during speech recognition.";
+          if (event.error === 'not-allowed') {
+            errorMessage = "Microphone access was denied. Please allow microphone access in your browser settings.";
+          } else if (event.error === 'no-speech') {
+            errorMessage = "No speech was detected. Please try again.";
+          } else if (event.error === 'network') {
+            errorMessage = "Network error occurred. Please check your internet connection.";
+          }
+
+          toast({
+            title: "Recognition Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setIsRecording(false);
+        };
+
+        recognition.onend = () => {
+          console.log('Speech recognition ended');
+          setIsRecording(false);
+        };
+
+        recognition.start();
+        recognitionRef.current = recognition;
+
+      } catch (error) {
+        console.error('Microphone access error:', error);
+        toast({
+          title: "Microphone Access Denied",
+          description: "Please allow microphone access to use voice recording.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Stop recording
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      setIsRecording(false);
+    }
   };
 
   if (showMindMap) {
@@ -195,13 +302,27 @@ export default function Tools() {
             </div>
 
             {/* Transcript Area */}
-            <div className="bg-muted/50 rounded-lg p-4 min-h-[100px] border border-border">
-              <p className="text-sm text-muted-foreground italic">
-                {isRecording 
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Transcription:</label>
+              <Textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                placeholder={isRecording 
                   ? "Your words will appear here as you speak..."
                   : "Click 'Start Recording' to begin voice-to-text capture"
                 }
-              </p>
+                className="min-h-[120px] resize-none"
+              />
+              {transcript && !isRecording && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setTranscript("")}
+                  className="w-full"
+                >
+                  Clear Transcript
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -261,18 +382,6 @@ export default function Tools() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card className="bg-gradient-subtle shadow-soft">
-        <CardContent className="p-8 text-center">
-          <h3 className="text-2xl font-bold mb-4">Need to save your progress?</h3>
-          <p className="text-muted-foreground mb-6">
-            Connect to Supabase to automatically save all your study sessions, notes, and progress.
-          </p>
-          <Button variant="hero" size="lg">
-            Connect Backend for Full Features
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
