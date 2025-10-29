@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import { Eraser, Undo, Trash2, X } from 'lucide-react';
+import { Eraser, Undo, Redo, Trash2, Download, X } from 'lucide-react';
 
 interface WhiteboardCanvasProps {
   onClose: () => void;
@@ -22,19 +22,20 @@ interface DrawingPath {
 }
 
 const COLORS = [
-  '#000000', // Black
-  '#ef4444', // Red
-  '#3b82f6', // Blue
-  '#10b981', // Green
-  '#f59e0b', // Orange
-  '#8b5cf6', // Purple
-  '#ec4899', // Pink
+  '#1a1a1a', // Black
+  '#f87171', // Soft Red
+  '#60a5fa', // Soft Blue
+  '#34d399', // Soft Green
+  '#a78bfa', // Soft Purple
+  '#f472b6', // Soft Pink
+  '#fbbf24', // Soft Yellow
 ];
 
 export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [paths, setPaths] = useState<DrawingPath[]>([]);
+  const [undoneSteps, setUndoneSteps] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [lineWidth, setLineWidth] = useState([3]);
@@ -274,36 +275,49 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
 
     setPaths([...paths, finalPath]);
     setCurrentPath([]);
-
-    // Redraw everything to apply the final path
-    setTimeout(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }, 0);
+    setUndoneSteps([]); // Clear redo stack when new action is made
   };
 
   const undo = () => {
     if (paths.length === 0) return;
+    const lastPath = paths[paths.length - 1];
     setPaths(paths.slice(0, -1));
+    setUndoneSteps([...undoneSteps, lastPath]);
     toast.info('Undo');
+  };
+
+  const redo = () => {
+    if (undoneSteps.length === 0) return;
+    const lastUndone = undoneSteps[undoneSteps.length - 1];
+    setPaths([...paths, lastUndone]);
+    setUndoneSteps(undoneSteps.slice(0, -1));
+    toast.info('Redo');
   };
 
   const clearCanvas = () => {
     setPaths([]);
+    setUndoneSteps([]);
     localStorage.removeItem('whiteboard');
     toast.success('Canvas cleared!');
+  };
+
+  const downloadCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const link = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    link.download = `whiteboard_${date}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast.success('Whiteboard downloaded!');
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
       <div className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
-        <h2 className="text-xl font-semibold">Whiteboard</h2>
+        <h2 className="text-xl font-semibold text-foreground">Whiteboard</h2>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-5 w-5" />
         </Button>
@@ -331,7 +345,7 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
         <div className="w-72 border-l border-border bg-card p-6 space-y-6">
           {/* Color Picker */}
           <div className="space-y-3">
-            <label className="text-sm font-semibold">Color</label>
+            <label className="text-sm font-semibold text-foreground">Marker Color</label>
             <div className="grid grid-cols-4 gap-2">
               {COLORS.map((color) => (
                 <button
@@ -340,12 +354,13 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
                     setSelectedColor(color);
                     setIsErasing(false);
                   }}
-                  className={`w-12 h-12 rounded-lg transition-all ${
+                  className={`w-12 h-12 rounded-lg transition-all border-2 ${
                     selectedColor === color && !isErasing
-                      ? 'ring-2 ring-primary ring-offset-2 scale-110'
-                      : 'hover:scale-105'
+                      ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 border-primary'
+                      : 'border-border hover:scale-105 hover:border-primary/50'
                   }`}
                   style={{ backgroundColor: color }}
+                  aria-label={`Select ${color} color`}
                 />
               ))}
             </div>
@@ -353,7 +368,7 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
 
           {/* Line Width */}
           <div className="space-y-3">
-            <label className="text-sm font-semibold">Line Width: {lineWidth[0]}px</label>
+            <label className="text-sm font-semibold text-foreground">Line Thickness: {lineWidth[0]}px</label>
             <Slider
               value={lineWidth}
               onValueChange={setLineWidth}
@@ -366,7 +381,7 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
 
           {/* Tools */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Tools</label>
+            <label className="text-sm font-semibold text-foreground">Tools</label>
             <Button
               variant={isErasing ? 'default' : 'outline'}
               className="w-full justify-start"
@@ -386,6 +401,24 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
             </Button>
             <Button
               variant="outline"
+              className="w-full justify-start"
+              onClick={redo}
+              disabled={undoneSteps.length === 0}
+            >
+              <Redo className="h-4 w-4 mr-2" />
+              Redo
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={downloadCanvas}
+              disabled={paths.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PNG
+            </Button>
+            <Button
+              variant="outline"
               className="w-full justify-start text-destructive hover:text-destructive"
               onClick={clearCanvas}
             >
@@ -395,8 +428,8 @@ export default function WhiteboardCanvas({ onClose }: WhiteboardCanvasProps) {
           </div>
 
           {/* Info */}
-          <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t">
-            <p>✨ Draw shapes and they'll auto-adjust!</p>
+          <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
+            <p>✨ Draw shapes and they auto-adjust!</p>
             <p>🔵 Circles, rectangles, and lines</p>
             <p>💾 Your work is auto-saved</p>
           </div>
