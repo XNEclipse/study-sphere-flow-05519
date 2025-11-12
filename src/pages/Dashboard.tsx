@@ -214,29 +214,54 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-              <div>
-                <p className="font-medium">Feynman Technique - Physics</p>
-                <p className="text-sm text-muted-foreground">25 min • 2 hours ago</p>
-              </div>
-              <Button variant="ghost" size="sm">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-              <div>
-                <p className="font-medium">Pomodoro - Math Review</p>
-                <p className="text-sm text-muted-foreground">45 min • Yesterday</p>
-              </div>
-              <Button variant="ghost" size="sm">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            {(() => {
+              const sessions = JSON.parse(localStorage.getItem("recentSessions") || "[]");
+              const recentFive = sessions.slice(0, 5);
 
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link to="/sessions">View All Sessions</Link>
-            </Button>
+              const getTimeAgo = (timestamp: number) => {
+                const now = Date.now();
+                const diff = now - timestamp;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                
+                if (hours < 1) return "Just now";
+                if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+                if (days === 1) return "Yesterday";
+                return `${days} days ago`;
+              };
+
+              if (recentFive.length === 0) {
+                return (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No sessions yet</p>
+                    <p className="text-xs mt-1">Start a session to see it here!</p>
+                  </div>
+                );
+              }
+
+              return recentFive.map((session: any) => (
+                <div 
+                  key={session.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                  onClick={() => {
+                    // Preload session steps
+                    localStorage.setItem("preloadSession", JSON.stringify(session));
+                    window.location.href = "/builder";
+                  }}
+                >
+                  <div>
+                    <p className="font-medium">{session.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {session.duration} min • {getTimeAgo(session.completedAt)}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              ));
+            })()}
           </CardContent>
         </Card>
 

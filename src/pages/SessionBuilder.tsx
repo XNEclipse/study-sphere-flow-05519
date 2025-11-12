@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import { FloatingTimer } from "@/components/FloatingTimer";
 import { 
   Plus, 
   PlayCircle, 
@@ -32,10 +36,58 @@ export default function SessionBuilder() {
     { id: "2", type: "break", name: "Short Break", duration: "5 min", customDuration: 5 }
   ]);
   
+  const [sessionName, setSessionName] = useState("");
   const [isTimerVisible, setIsTimerVisible] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [showFloatingTimer, setShowFloatingTimer] = useState(false);
+  const [currentSessionStartTime, setCurrentSessionStartTime] = useState<number | null>(null);
+
+  // Load timer state or preloaded session from localStorage on mount
+  useEffect(() => {
+    // Check for preloaded session first
+    const preloadSession = localStorage.getItem("preloadSession");
+    if (preloadSession) {
+      const session = JSON.parse(preloadSession);
+      setSessionSteps(session.steps);
+      setSessionName(session.name);
+      localStorage.removeItem("preloadSession");
+      toast({
+        title: "Session Loaded",
+        description: `"${session.name}" has been loaded.`,
+      });
+      return;
+    }
+
+    // Load active timer if exists
+    const savedTimer = localStorage.getItem("activeTimer");
+    if (savedTimer) {
+      const { timeRemaining: savedTime, isRunning, sessionName: savedName, startTime, steps } = JSON.parse(savedTimer);
+      setTimeRemaining(savedTime);
+      setIsTimerRunning(isRunning);
+      setIsTimerVisible(true);
+      setShowFloatingTimer(true);
+      setSessionName(savedName);
+      setCurrentSessionStartTime(startTime);
+      if (steps) {
+        setSessionSteps(steps);
+      }
+    }
+  }, []);
+
+  // Save timer state to localStorage whenever it changes
+  useEffect(() => {
+    if (isTimerVisible) {
+      localStorage.setItem("activeTimer", JSON.stringify({
+        timeRemaining,
+        isRunning: isTimerRunning,
+        sessionName: sessionName || "Untitled Session",
+        startTime: currentSessionStartTime,
+        steps: sessionSteps
+      }));
+    }
+  }, [timeRemaining, isTimerRunning, isTimerVisible, sessionName, currentSessionStartTime, sessionSteps]);
 
   const addStep = (stepType: any) => {
     const step = availableSteps.find(s => s.id === stepType);
@@ -91,10 +143,19 @@ export default function SessionBuilder() {
 
   const startSession = () => {
     const totalMinutes = getTotalDuration();
-    setTimeRemaining(totalMinutes * 60); // Convert to seconds
+    const finalSessionName = sessionName.trim() || "Untitled Session";
+    setTimeRemaining(totalMinutes * 60);
     setIsTimerVisible(true);
     setIsTimerRunning(true);
     setIsPaused(false);
+    setShowFloatingTimer(true);
+    setCurrentSessionStartTime(Date.now());
+    setSessionName(finalSessionName);
+    
+    toast({
+      title: "Session Started! 🚀",
+      description: `"${finalSessionName}" is now in progress.`,
+    });
   };
 
   const toggleTimer = () => {
@@ -109,6 +170,33 @@ export default function SessionBuilder() {
     setIsPaused(false);
   };
 
+  const endSession = () => {
+    if (currentSessionStartTime) {
+      const session = {
+        id: Date.now().toString(),
+        name: sessionName || "Untitled Session",
+        duration: getTotalDuration(),
+        completedAt: Date.now(),
+        steps: sessionSteps
+      };
+
+      const sessions = JSON.parse(localStorage.getItem("recentSessions") || "[]");
+      sessions.unshift(session);
+      if (sessions.length > 10) sessions.pop();
+      localStorage.setItem("recentSessions", JSON.stringify(sessions));
+    }
+
+    localStorage.removeItem("activeTimer");
+    setIsTimerVisible(false);
+    setShowFloatingTimer(false);
+    setCurrentSessionStartTime(null);
+    
+    toast({
+      title: "Session Complete! 🎉",
+      description: "Your study session has ended. Great job!",
+    });
+  };
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -117,6 +205,7 @@ export default function SessionBuilder() {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             setIsTimerRunning(false);
+            endSession();
             return 0;
           }
           return prev - 1;
@@ -135,6 +224,16 @@ export default function SessionBuilder() {
 
   return (
     <div className="space-y-8">
+      {/* Floating Timer */}
+      {showFloatingTimer && (
+        <FloatingTimer
+          timeRemaining={timeRemaining}
+          isRunning={isTimerRunning}
+          sessionName={sessionName || "Untitled Session"}
+          onClose={endSession}
+        />
+      )}
+
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-focus bg-clip-text text-transparent">
@@ -144,6 +243,27 @@ export default function SessionBuilder() {
           Design your perfect study flow by combining proven techniques. Drag, drop, and customize!
         </p>
       </div>
+
+      {/* Session Name Input */}
+      {!isTimerVisible && (
+        <Card className="shadow-soft max-w-2xl mx-auto">
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <Label htmlFor="session-name">Session Name (Optional)</Label>
+              <Input
+                id="session-name"
+                placeholder="e.g., Physics Review, Math Practice..."
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                className="text-lg"
+              />
+              <p className="text-xs text-muted-foreground">
+                Give your session a name to track it in your dashboard
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Available Steps */}
@@ -267,6 +387,9 @@ export default function SessionBuilder() {
         <Card className="shadow-soft border-2 border-primary">
           <CardContent className="pt-6">
             <div className="text-center space-y-6">
+              <div className="mb-2">
+                <h3 className="text-xl font-semibold text-foreground">{sessionName || "Untitled Session"}</h3>
+              </div>
               <div className="text-6xl font-bold text-primary tabular-nums">
                 {formatTime(timeRemaining)}
               </div>
@@ -295,6 +418,13 @@ export default function SessionBuilder() {
                 >
                   <RotateCw className="h-5 w-5 mr-2" />
                   Reset
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="lg"
+                  onClick={endSession}
+                >
+                  End Session
                 </Button>
               </div>
               {timeRemaining === 0 && (
