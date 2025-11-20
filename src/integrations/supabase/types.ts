@@ -14,13 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      user_stats: {
+        Row: {
+          created_at: string
+          id: string
+          last_update_time: string | null
+          study_streak: number
+          total_study_time: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_update_time?: string | null
+          study_streak?: number
+          total_study_time?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_update_time?: string | null
+          study_streak?: number
+          total_study_time?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_or_create_user_stats: {
+        Args: { user_uuid: string }
+        Returns: {
+          last_update_time: string
+          study_streak: number
+          total_study_time: number
+        }[]
+      }
+      update_study_time: {
+        Args: { hours_to_add: number; user_uuid: string }
+        Returns: {
+          study_streak: number
+          total_study_time: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
