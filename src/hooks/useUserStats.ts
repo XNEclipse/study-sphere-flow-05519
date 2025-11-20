@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface UserStats {
   study_streak: number;
   total_study_time: number;
-  last_login_date: string | null;
+  last_update_time: string | null;
 }
 
 export function useUserStats() {
@@ -18,21 +18,17 @@ export function useUserStats() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('user_stats')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const { data, error } = await supabase.rpc('get_or_create_user_stats', {
+        user_uuid: user.id
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error) throw error;
 
-      if (data) {
+      if (data && data.length > 0) {
         setStats({
-          study_streak: data.study_streak,
-          total_study_time: data.total_study_time,
-          last_login_date: data.last_login_date,
+          study_streak: data[0].study_streak,
+          total_study_time: parseFloat(data[0].total_study_time.toString()),
+          last_update_time: data[0].last_update_time,
         });
       }
     } catch (error) {
@@ -42,58 +38,36 @@ export function useUserStats() {
     }
   };
 
-  const updateLoginStreak = async () => {
+  const addStudyTime = async (hoursToAdd: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase.rpc('update_study_streak', {
-        user_uuid: user.id
-      });
-
-      if (error) throw error;
-      
-      // Refetch stats after update
-      await fetchStats();
-    } catch (error) {
-      console.error('Error updating login streak:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update login streak"
-      });
-    }
-  };
-
-  const completeSession = async (sessionName: string, durationHours: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase.rpc('complete_study_session', {
+      const { data, error } = await supabase.rpc('update_study_time', {
         user_uuid: user.id,
-        session_name_param: sessionName,
-        duration_hours_param: durationHours
+        hours_to_add: hoursToAdd
       });
 
       if (error) throw error;
       
-      // Refetch stats after update
-      await fetchStats();
-      
-      toast({
-        title: "Session Complete!",
-        description: `Added ${durationHours} hours to your study time.`
-      });
+      // Update local state with new values
+      if (data && data.length > 0) {
+        setStats({
+          study_streak: data[0].study_streak,
+          total_study_time: parseFloat(data[0].total_study_time.toString()),
+          last_update_time: new Date().toISOString(),
+        });
+      }
     } catch (error) {
-      console.error('Error completing session:', error);
+      console.error('Error adding study time:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to record session completion"
+        description: "Failed to update study time"
       });
     }
   };
+
 
   useEffect(() => {
     fetchStats();
@@ -102,8 +76,7 @@ export function useUserStats() {
   return {
     stats,
     loading,
-    updateLoginStreak,
-    completeSession,
+    addStudyTime,
     refetch: fetchStats
   };
 }
