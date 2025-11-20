@@ -27,37 +27,15 @@ interface Goal {
 }
 
 export default function Dashboard() {
-  const { stats, loading } = useUserStats();
-  
-  // Study Streak & Total Study Time
-  const [studyStreak, setStudyStreak] = useState(0);
-  const [totalStudyTime, setTotalStudyTime] = useState(0);
+  const { stats, loading, addStudyTime } = useUserStats();
   
   // Today's Focus Goals
   const [goals, setGoals] = useState<Goal[]>([]);
   const [newGoal, setNewGoal] = useState("");
   
-  // Initialize counters and goals on mount
+  // Load goals on mount
   useEffect(() => {
-    // Study Streak - increment on login
-    const lastLoginDate = localStorage.getItem("lastLoginDate");
     const today = new Date().toDateString();
-    const currentStreak = parseInt(localStorage.getItem("studyStreak") || "0");
-    
-    if (lastLoginDate !== today) {
-      const newStreak = currentStreak + 1;
-      setStudyStreak(newStreak);
-      localStorage.setItem("studyStreak", newStreak.toString());
-      localStorage.setItem("lastLoginDate", today);
-    } else {
-      setStudyStreak(currentStreak);
-    }
-    
-    // Total Study Time - load and start timer
-    const savedTime = parseFloat(localStorage.getItem("totalStudyHours") || "0");
-    setTotalStudyTime(savedTime);
-    
-    // Load today's goals
     const savedGoals = localStorage.getItem("todayGoals");
     const tomorrowGoals = localStorage.getItem("tomorrowGoals");
     const lastGoalDate = localStorage.getItem("lastGoalDate");
@@ -81,18 +59,16 @@ export default function Dashboard() {
     }
   }, []);
   
-  // Study Time Timer - increment every 3 minutes
+  // Study Time Timer - increment every 3 minutes (demo mode)
   useEffect(() => {
+    if (!stats) return;
+    
     const interval = setInterval(() => {
-      setTotalStudyTime(prev => {
-        const newTime = prev + 1;
-        localStorage.setItem("totalStudyHours", newTime.toString());
-        return newTime;
-      });
+      addStudyTime(1); // Add 1 hour every 3 minutes
     }, 3 * 60 * 1000); // 3 minutes in milliseconds
     
     return () => clearInterval(interval);
-  }, []);
+  }, [stats, addStudyTime]);
   
   // Save goals to localStorage whenever they change
   useEffect(() => {
@@ -176,7 +152,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-success">
-              {studyStreak} {studyStreak === 1 ? 'day' : 'days'}
+              {loading ? <Skeleton className="h-8 w-20" /> : `${stats?.study_streak || 0} ${(stats?.study_streak || 0) === 1 ? 'day' : 'days'}`}
             </div>
             <p className="text-xs text-muted-foreground">
               Keep it up! You're building momentum.
@@ -191,7 +167,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {totalStudyTime.toFixed(1)} hrs
+              {loading ? <Skeleton className="h-8 w-24" /> : `${(stats?.total_study_time || 0).toFixed(1)} hrs`}
             </div>
             <p className="text-xs text-muted-foreground">
               Track your learning progress

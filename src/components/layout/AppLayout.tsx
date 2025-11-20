@@ -13,7 +13,6 @@ export const AppLayout = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { updateLoginStreak } = useUserStats();
 
   useEffect(() => {
     // Check initial auth state
@@ -21,9 +20,6 @@ export const AppLayout = () => {
       setUser(session?.user ?? null);
       if (!session) {
         navigate('/auth');
-      } else {
-        // Update streak on app initialization if user is logged in
-        updateLoginStreak();
       }
       setLoading(false);
     });
@@ -34,15 +30,12 @@ export const AppLayout = () => {
         setUser(session?.user ?? null);
         if (!session) {
           navigate('/auth');
-        } else if (event === 'SIGNED_IN') {
-          // Update streak on successful login
-          updateLoginStreak();
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, updateLoginStreak]);
+  }, [navigate]);
 
   if (loading) {
     return (
