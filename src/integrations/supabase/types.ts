@@ -14,6 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      flashcard_cards: {
+        Row: {
+          created_at: string
+          definition: string
+          id: string
+          image_url: string | null
+          position: number
+          set_id: string
+          term: string
+        }
+        Insert: {
+          created_at?: string
+          definition: string
+          id?: string
+          image_url?: string | null
+          position?: number
+          set_id: string
+          term: string
+        }
+        Update: {
+          created_at?: string
+          definition?: string
+          id?: string
+          image_url?: string | null
+          position?: number
+          set_id?: string
+          term?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_cards_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcard_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      study_progress: {
+        Row: {
+          card_id: string
+          created_at: string
+          ease_factor: number
+          id: string
+          interval: number
+          next_review: string
+          repetition: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval?: number
+          next_review?: string
+          repetition?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          ease_factor?: number
+          id?: string
+          interval?: number
+          next_review?: string
+          repetition?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_progress_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_stats: {
         Row: {
           created_at: string
