@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen } from "lucide-react";
+import logoImage from "@/assets/studysphere-logo.png";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -79,8 +79,8 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
       <Card className="w-full max-w-md shadow-glow">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
-            <BookOpen className="h-6 w-6 text-primary-foreground" />
+          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center">
+            <img src={logoImage} alt="StudySphere Logo" className="w-full h-full object-cover" />
           </div>
           <CardTitle className="text-2xl font-bold">StudySphere</CardTitle>
           <CardDescription>
