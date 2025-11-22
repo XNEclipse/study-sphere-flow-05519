@@ -4,9 +4,9 @@ import {
   Home, 
   BookOpen, 
   Layers3,
-  Wrench,
-  GraduationCap
+  Wrench
 } from "lucide-react";
+import logoImage from "@/assets/studysphere-logo.png";
 
 const navigation = [
   { name: "Dashboard", to: "/", icon: Home },
@@ -24,8 +24,8 @@ export const Sidebar = ({ onItemClick }: SidebarProps) => {
     <div className="flex h-full flex-col bg-card border-r border-border shadow-soft">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6 border-b border-border">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary shadow-focus">
-          <GraduationCap className="h-6 w-6 text-primary-foreground" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden">
+          <img src={logoImage} alt="StudySphere Logo" className="w-full h-full object-cover" />
         </div>
         <div>
           <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">

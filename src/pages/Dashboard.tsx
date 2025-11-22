@@ -270,13 +270,6 @@ export default function Dashboard() {
                 <span className="text-sm">Timer & Tools</span>
               </Link>
             </Button>
-            
-            <Button variant="outline" className="h-auto flex-col py-4" asChild>
-              <Link to="/scheduler">
-                <Calendar className="h-6 w-6 mb-2 text-success" />
-                <span className="text-sm">Smart Scheduler</span>
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
