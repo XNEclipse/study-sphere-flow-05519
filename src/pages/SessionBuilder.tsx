@@ -25,7 +25,8 @@ import {
 const availableSteps = [
   { id: "pomodoro", name: "Pomodoro Block", icon: Timer, duration: "25 min", color: "bg-red-100 text-red-700" },
   { id: "active-recall", name: "Active Recall", icon: Brain, duration: "15 min", color: "bg-blue-100 text-blue-700" },
-  { id: "feynman", name: "Feynman Technique", icon: RotateCcw, duration: "20 min", color: "bg-green-100 text-green-700" },
+  { id: "spaced-repetition", name: "Spaced Repetition", icon: RotateCw, duration: "30 min", color: "bg-indigo-100 text-indigo-700" },
+  { id: "feynman", name: "Feynman Technique", icon: RotateCcw, duration: "5 min", color: "bg-green-100 text-green-700" },
   { id: "notes", name: "Note Summary", icon: FileText, duration: "20 min", color: "bg-purple-100 text-purple-700" },
   { id: "break", name: "Break", icon: Coffee, duration: "5 min", color: "bg-yellow-100 text-yellow-700" }
 ];
